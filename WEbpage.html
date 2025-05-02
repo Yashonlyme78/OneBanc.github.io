@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MPIN Strength Checker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #result {
+      margin-top: 25px;
+      padding: 10px;
+      border-radius: 5px;
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+<h2>MPIN Strength Checker</h2>
+
+<form id="mpinForm">
+  <label for="mpin">Enter 4 or 6-digit MPIN:</label>
+  <input type="text" id="mpin" maxlength="6" required pattern="^\d{4}|\d{6}$" title="Enter a 4 or 6 digit numeric MPIN" />
+
+  <label for="dob">Your Date of Birth:</label>
+  <input type="date" id="dob" required />
+
+  <label for="spouseDob">Spouse's Date of Birth:</label>
+  <input type="date" id="spouseDob" required />
+
+  <label for="anniversary">Anniversary Date:</label>
+  <input type="date" id="anniversary" required />
+
+  <button type="submit">Check Strength</button>
+</form>
+
+<div id="result"></div>
+
+<script>
+const COMMON_PINS_4 = ['1234', '0000', '1111', '1212', '7777', '1004', '2000', '4444', '2222', '6969'];
+const COMMON_PINS_6 = ['123456', '000000', '111111', '121212', '777777', '100400', '200000', '444444', '222222', '696969'];
+
+function extractDateParts(dateStr) {
+  if (!dateStr) return [];
+  const [year, month, day] = dateStr.split('-');
+  const shortYear = year.slice(2);
+  return [
+    year + month + day,
+    day + month + shortYear,
+    month + day + shortYear,
+    month + day + year,
+    day + month + year
+  ];
+}
+
+document.getElementById('mpinForm').addEventListener('submit', function(event) {
+  event.preventDefault();
+
+  const pin = document.getElementById('mpin').value.trim();
+  const dob = document.getElementById('dob').value;
+  const spouseDob = document.getElementById('spouseDob').value;
+  const anniversary = document.getElementById('anniversary').value;
+
+  if (!pin || !dob || !spouseDob || !anniversary) {
+    alert("Please fill in all the fields.");
+    return;
+  }
+
+  if (!/^\d{4}$|^\d{6}$/.test(pin)) {
+    alert("MPIN must be exactly 4 or 6 digits.");
+    return;
+  }
+
+  const reasons = [];
+  const isCommon = (pin.length === 4 ? COMMON_PINS_4 : COMMON_PINS_6).includes(pin);
+  if (isCommon) reasons.push("COMMONLY_USED");
+
+  const checks = [
+    { date: dob, reason: "DEMOGRAPHIC_DOB_SELF" },
+    { date: spouseDob, reason: "DEMOGRAPHIC_DOB_SPOUSE" },
+    { date: anniversary, reason: "DEMOGRAPHIC_ANNIVERSARY" }
+  ];
+
+  for (const { date, reason } of checks) {
+    for (const part of extractDateParts(date)) {
+      if (part.includes(pin)) {
+        reasons.push(reason);
+        break;
+      }
+    }
+  }
+
+  const strength = reasons.length ? "WEAK" : "STRONG";
+  const resultHTML = `
+    <strong>Strength:</strong> ${strength}<br>
+    <strong>Reasons:</strong> ${reasons.length ? JSON.stringify(reasons) : '[]'}
+  `;
+  document.getElementById('result').innerHTML = resultHTML;
+});
+</script>
+
+</body>
+</html>
