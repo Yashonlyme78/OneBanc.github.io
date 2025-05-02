@@ -54,6 +54,10 @@ function extractDateParts(dateStr) {
   ];
 }
 
+function isCommonPin(pin) {
+  return (pin.length === 4 ? COMMON_PINS_4 : COMMON_PINS_6).includes(pin);
+}
+
 document.getElementById('mpinForm').addEventListener('submit', function(event) {
   event.preventDefault();
 
@@ -73,9 +77,11 @@ document.getElementById('mpinForm').addEventListener('submit', function(event) {
   }
 
   const reasons = [];
-  const isCommon = (pin.length === 4 ? COMMON_PINS_4 : COMMON_PINS_6).includes(pin);
-  if (isCommon) reasons.push("COMMONLY_USED");
+  
+  // Check for commonly used pin
+  if (isCommonPin(pin)) reasons.push("COMMONLY_USED");
 
+  // Demographic checks for DOB and anniversary
   const checks = [
     { date: dob, reason: "DEMOGRAPHIC_DOB_SELF" },
     { date: spouseDob, reason: "DEMOGRAPHIC_DOB_SPOUSE" },
@@ -91,7 +97,10 @@ document.getElementById('mpinForm').addEventListener('submit', function(event) {
     }
   }
 
+  // Determine strength
   const strength = reasons.length ? "WEAK" : "STRONG";
+  
+  // Display the result
   const resultHTML = `
     <strong>Strength:</strong> ${strength}<br>
     <strong>Reasons:</strong> ${reasons.length ? JSON.stringify(reasons) : '[]'}
